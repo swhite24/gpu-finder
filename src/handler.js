@@ -1,4 +1,5 @@
 const AWS = require('aws-sdk');
+const qs = require('querystring');
 const { collect } = require('./services/collector');
 const { notify } = require('./services/slack');
 const config = require('./config');
@@ -6,11 +7,14 @@ const config = require('./config');
 const lambda = new AWS.Lambda({ region: config.region });
 
 exports.handler = async (event, context, callback) => {
-  console.log(event);
   context.callbackWaitsForEmptyEventLoop = false;
+  const body = qs.parse(event.body) || {};
+  const { response_url } = body;
+
+  console.log('body: ', body);
 
   try {
-    await invokeWorker({ slash_command: true });
+    await invokeWorker({ slash_command: true, response_url });
 
     callback(null, {
       statusCode: 200,
@@ -25,12 +29,13 @@ exports.handler = async (event, context, callback) => {
 };
 
 exports.worker = async (event, context, callback) => {
-  console.log(event);
   context.callbackWaitsForEmptyEventLoop = false;
+  console.log(event);
+  const { response_url } = event;
 
   try {
     const results = await collect();
-    await notify(results);
+    await notify(results, response_url);
 
     callback(null, {
       success: true,
