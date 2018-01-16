@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node src/test.js",
     "test": "node src/test.js"
   },
   "author": "Steven White <swhitewvu24@gmail.com>",
