@@ -1,0 +1,44 @@
+
+service: find-gpus
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  environment:
+    REGION:
+      Ref: 'AWS::Region'
+  iamRoleStatements:
+    - Effect: 'Allow'
+      Action:
+        - 'lambda:InvokeFunction'
+      Resource:
+        - '*'
+
+package:
+  individually: true
+custom:
+  optimize:
+    debug: false
+    minify: false
+    plugins: ['syntax-async-functions', 'transform-async-to-generator']
+    presets: []
+    extensions: ['.js', '.json']
+plugins:
+  - serverless-plugin-optimize
+
+functions:
+  handler:
+    handler: src/handler.handler
+    environment:
+      WORKER_FUNCTION:
+        Ref: WorkerLambdaFunction
+    timeout: 30
+    events:
+      - http:
+          path: /find
+          method: post
+      # - schedule: rate(1 minute)
+  worker:
+    handler: src/handler.worker
+    environment: ${file(./config/${opt:stage, self:provider.stage}.yml):env}
+    timeout: 30
